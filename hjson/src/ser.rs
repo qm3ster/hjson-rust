@@ -62,15 +62,16 @@ where
     W: io::Write,
     F: Formatter,
 {
+    type Ok = ();
     type Error = Error;
 
-    type SeqState = State;
-    type TupleState = State;
-    type TupleStructState = State;
-    type TupleVariantState = State;
-    type MapState = State;
-    type StructState = State;
-    type StructVariantState = State;
+    type SerializeSeq = State;
+    type SerializeTuple = State;
+    type SerializeTupleStruct = State;
+    type SerializeTupleVariant = State;
+    type SerializeMap = State;
+    type SerializeStruct = State;
+    type SerializeStructVariant = State;
 
     #[inline]
     fn serialize_bool(&mut self, value: bool) -> Result<()> {
@@ -428,6 +429,7 @@ where
     W: io::Write,
     F: Formatter,
 {
+    type Ok = ();
     type Error = Error;
 
     #[inline]
@@ -435,13 +437,13 @@ where
         escape_key(&mut self.ser.writer, value).map_err(From::from)
     }
 
-    type SeqState = ();
-    type TupleState = ();
-    type TupleStructState = ();
-    type TupleVariantState = ();
-    type MapState = ();
-    type StructState = ();
-    type StructVariantState = ();
+    type SerializeSeq = ();
+    type SerializeTuple = ();
+    type SerializeTupleStruct = ();
+    type SerializeTupleVariant = ();
+    type SerializeMap = ();
+    type SerializeStruct = ();
+    type SerializeStructVariant = ();
 
     fn serialize_bool(&mut self, _value: bool) -> Result<()> {
         Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))

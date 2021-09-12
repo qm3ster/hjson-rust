@@ -519,15 +519,16 @@ pub struct MapState {
 }
 
 impl ser::Serializer for Serializer {
+    type Ok = ();
     type Error = Error;
 
-    type SeqState = Vec<Value>;
-    type TupleState = Vec<Value>;
-    type TupleStructState = Vec<Value>;
-    type TupleVariantState = TupleVariantState;
-    type MapState = MapState;
-    type StructState = MapState;
-    type StructVariantState = StructVariantState;
+    type SerializeSeq = Vec<Value>;
+    type SerializeTuple = Vec<Value>;
+    type SerializeTupleStruct = Vec<Value>;
+    type SerializeTupleVariant = TupleVariantState;
+    type SerializeMap = MapState;
+    type SerializeStruct = MapState;
+    type SerializeStructVariant = StructVariantState;
 
     #[inline]
     fn serialize_bool(&mut self, value: bool) -> Result<(), Error> {
