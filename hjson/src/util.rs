@@ -44,7 +44,7 @@ where
     }
 
     pub fn eof(&mut self) -> Result<bool> {
-        Ok(r#try!(self.peek()).is_none())
+        Ok(self.peek()?.is_none())
     }
 
     pub fn peek_next(&mut self, idx: usize) -> Result<Option<u8>> {
@@ -67,7 +67,7 @@ where
     }
 
     pub fn peek_or_null(&mut self) -> Result<u8> {
-        Ok(r#try!(self.peek()).unwrap_or(b'\x00'))
+        Ok(self.peek()?.unwrap_or(b'\x00'))
     }
 
     pub fn eat_char(&mut self) -> u8 {
@@ -93,12 +93,12 @@ where
     }
 
     pub fn next_char_or_null(&mut self) -> Result<u8> {
-        Ok(r#try!(self.next_char()).unwrap_or(b'\x00'))
+        Ok(self.next_char()?.unwrap_or(b'\x00'))
     }
 
     fn eat_line(&mut self) -> Result<()> {
         loop {
-            match r#try!(self.peek()) {
+            match self.peek()? {
                 Some(b'\n') | None => return Ok(()),
                 _ => {}
             }
@@ -108,19 +108,19 @@ where
 
     pub fn parse_whitespace(&mut self) -> Result<()> {
         loop {
-            match r#try!(self.peek_or_null()) {
+            match self.peek_or_null()? {
                 b' ' | b'\n' | b'\t' | b'\r' => {
                     self.eat_char();
                 }
-                b'#' => r#try!(self.eat_line()),
+                b'#' => self.eat_line()?,
                 b'/' => {
-                    match r#try!(self.peek_next(1)) {
-                        Some(b'/') => r#try!(self.eat_line()),
+                    match self.peek_next(1)? {
+                        Some(b'/') => self.eat_line()?,
                         Some(b'*') => {
                             self.eat_char();
                             self.eat_char();
-                            while !(r#try!(self.peek()).unwrap_or(b'*') == b'*'
-                                && r#try!(self.peek_next(1)).unwrap_or(b'/') == b'/')
+                            while !(self.peek()?.unwrap_or(b'*') == b'*'
+                                && self.peek_next(1)?.unwrap_or(b'/') == b'/')
                             {
                                 self.eat_char();
                             }
@@ -177,12 +177,12 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
     pub fn parse(&mut self, stop_at_next: bool) -> Result<Number> {
         match self.try_parse() {
             Ok(()) => {
-                r#try!(self.rdr.parse_whitespace());
+                self.rdr.parse_whitespace()?;
 
-                let mut ch = r#try!(self.rdr.next_char_or_null());
+                let mut ch = self.rdr.next_char_or_null()?;
 
                 if stop_at_next {
-                    let ch2 = r#try!(self.rdr.peek_or_null());
+                    let ch2 = self.rdr.peek_or_null()?;
                     // end scan if we find a punctuator character like ,}] or a comment
                     if ch == b','
                         || ch == b'}'
@@ -222,17 +222,17 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
     }
 
     fn try_parse(&mut self) -> Result<()> {
-        if r#try!(self.rdr.peek_or_null()) == b'-' {
+        if self.rdr.peek_or_null()? == b'-' {
             self.result.push(self.rdr.eat_char());
         }
 
         let mut has_value = false;
 
-        if r#try!(self.rdr.peek_or_null()) == b'0' {
+        if self.rdr.peek_or_null()? == b'0' {
             self.result.push(self.rdr.eat_char());
             has_value = true;
             // There can be only one leading '0'.
-            match r#try!(self.rdr.peek_or_null()) {
+            match self.rdr.peek_or_null()? {
                 b'0'..=b'9' => {
                     return Err(Error::Syntax(ErrorCode::InvalidNumber, 0, 0));
                 }
@@ -241,7 +241,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
         }
 
         loop {
-            match r#try!(self.rdr.peek_or_null()) {
+            match self.rdr.peek_or_null()? {
                 b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                     has_value = true;
@@ -274,7 +274,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
         self.result.push(b'.');
 
         // Make sure a digit follows the decimal place.
-        match r#try!(self.rdr.next_char_or_null()) {
+        match self.rdr.next_char_or_null()? {
             c @ b'0'..=b'9' => {
                 self.result.push(c);
             }
@@ -284,7 +284,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
         };
 
         loop {
-            match r#try!(self.rdr.peek_or_null()) {
+            match self.rdr.peek_or_null()? {
                 b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                 }
@@ -294,7 +294,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
             }
         }
 
-        match r#try!(self.rdr.peek_or_null()) {
+        match self.rdr.peek_or_null()? {
             b'e' | b'E' => {
                 self.rdr.eat_char();
                 self.try_exponent()
@@ -306,7 +306,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
     fn try_exponent(&mut self) -> Result<()> {
         self.result.push(b'e');
 
-        match r#try!(self.rdr.peek_or_null()) {
+        match self.rdr.peek_or_null()? {
             b'+' => {
                 self.result.push(self.rdr.eat_char());
             }
@@ -317,7 +317,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
         };
 
         // Make sure a digit follows the exponent place.
-        match r#try!(self.rdr.next_char_or_null()) {
+        match self.rdr.next_char_or_null()? {
             c @ b'0'..=b'9' => {
                 self.result.push(c);
             }
@@ -327,7 +327,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
         };
 
         loop {
-            match r#try!(self.rdr.peek_or_null()) {
+            match self.rdr.peek_or_null()? {
                 b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                 }

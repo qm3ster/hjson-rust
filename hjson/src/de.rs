@@ -62,8 +62,8 @@ where
     /// only has trailing whitespace.
     #[inline]
     pub fn end(&mut self) -> Result<()> {
-        r#try!(self.rdr.parse_whitespace());
-        if r#try!(self.rdr.eof()) {
+        self.rdr.parse_whitespace()?;
+        if self.rdr.eof()? {
             Ok(())
         } else {
             Err(self.rdr.error(ErrorCode::TrailingCharacters))
@@ -89,7 +89,7 @@ where
 
         let mut space: Option<usize> = None;
         loop {
-            let ch = r#try!(self.rdr.next_char_or_null());
+            let ch = self.rdr.next_char_or_null()?;
 
             if ch == b':' {
                 if self.str_buf.is_empty() {
@@ -122,9 +122,9 @@ where
     where
         V: de::Visitor,
     {
-        r#try!(self.rdr.parse_whitespace());
+        self.rdr.parse_whitespace()?;
 
-        if r#try!(self.rdr.eof()) {
+        if self.rdr.eof()? {
             return Err(self.rdr.error(ErrorCode::EOFWhileParsingValue));
         }
 
@@ -140,7 +140,7 @@ where
             _ => {}
         }
 
-        let value = match r#try!(self.rdr.peek_or_null()) {
+        let value = match self.rdr.peek_or_null()? {
             /*
             b'-' => {
                 self.rdr.eat_char();
@@ -152,7 +152,7 @@ where
             */
             b'"' => {
                 self.rdr.eat_char();
-                r#try!(self.parse_string());
+                self.parse_string()?;
                 let s = str::from_utf8(&self.str_buf).unwrap();
                 visitor.visit_str(s)
             }
@@ -177,7 +177,7 @@ where
 
     fn parse_ident(&mut self, ident: &[u8]) -> Result<()> {
         for c in ident {
-            if Some(*c) != r#try!(self.rdr.next_char()) {
+            if Some(*c) != self.rdr.next_char()? {
                 return Err(self.rdr.error(ErrorCode::ExpectedSomeIdent));
             }
         }
@@ -193,19 +193,19 @@ where
         // returns string, true, false, or null.
         self.str_buf.clear();
 
-        let first = r#try!(self.rdr.peek()).unwrap();
+        let first = self.rdr.peek()?.unwrap();
 
         if self.is_punctuator_char(first) {
             return Err(self.rdr.error(ErrorCode::PunctuatorInQlString));
         }
 
         loop {
-            let ch = r#try!(self.rdr.next_char_or_null());
+            let ch = self.rdr.next_char_or_null()?;
 
             let is_eol = ch == b'\r' || ch == b'\n' || ch == b'\x00';
             let is_comment = ch == b'#'
                 || if ch == b'/' {
-                    let next = r#try!(self.rdr.peek_or_null());
+                    let next = self.rdr.peek_or_null()?;
                     next == b'/' || next == b'*'
                 } else {
                     false
@@ -268,8 +268,8 @@ where
     fn decode_hex_escape(&mut self) -> Result<u16> {
         let mut i = 0;
         let mut n = 0u16;
-        while i < 4 && !r#try!(self.rdr.eof()) {
-            n = match r#try!(self.rdr.next_char_or_null()) {
+        while i < 4 && !self.rdr.eof()? {
+            n = match self.rdr.next_char_or_null()? {
                 c @ b'0'..=b'9' => n * 16_u16 + ((c as u16) - (b'0' as u16)),
                 b'a' | b'A' => n * 16_u16 + 10_u16,
                 b'b' | b'B' => n * 16_u16 + 11_u16,
@@ -294,7 +294,7 @@ where
     }
 
     fn ml_skip_white(&mut self) -> Result<bool> {
-        match r#try!(self.rdr.peek_or_null()) {
+        match self.rdr.peek_or_null()? {
             b' ' | b'\t' | b'\r' => {
                 self.rdr.eat_char();
                 Ok(true)
@@ -305,7 +305,7 @@ where
 
     fn ml_skip_indent(&mut self, indent: usize) -> Result<()> {
         let mut skip = indent;
-        while r#try!(self.ml_skip_white()) && skip > 0 {
+        while self.ml_skip_white()? && skip > 0 {
             skip -= 1;
         }
         Ok(())
@@ -325,18 +325,18 @@ where
         let indent = col - 4;
 
         // skip white/to (newline)
-        while r#try!(self.ml_skip_white()) {}
-        if r#try!(self.rdr.peek_or_null()) == b'\n' {
+        while self.ml_skip_white()? {}
+        if self.rdr.peek_or_null()? == b'\n' {
             self.rdr.eat_char();
-            r#try!(self.ml_skip_indent(indent));
+            self.ml_skip_indent(indent)?;
         }
 
         // When parsing multiline string values, we must look for ' characters.
         loop {
-            if r#try!(self.rdr.eof()) {
+            if self.rdr.eof()? {
                 return Err(self.rdr.error(ErrorCode::EOFWhileParsingString));
             } // todo error("Bad multiline string");
-            let ch = r#try!(self.rdr.next_char_or_null());
+            let ch = self.rdr.next_char_or_null()?;
 
             if ch == b'\'' {
                 triple += 1;
@@ -361,7 +361,7 @@ where
                 self.str_buf.push(ch);
             }
             if ch == b'\n' {
-                r#try!(self.ml_skip_indent(indent));
+                self.ml_skip_indent(indent)?;
             }
         }
     }
@@ -370,7 +370,7 @@ where
         self.str_buf.clear();
 
         loop {
-            let ch = match r#try!(self.rdr.next_char()) {
+            let ch = match self.rdr.next_char()? {
                 Some(ch) => ch,
                 None => {
                     return Err(self.rdr.error(ErrorCode::EOFWhileParsingString));
@@ -382,7 +382,7 @@ where
                     return Ok(());
                 }
                 b'\\' => {
-                    let ch = match r#try!(self.rdr.next_char()) {
+                    let ch = match self.rdr.next_char()? {
                         Some(ch) => ch,
                         None => {
                             return Err(self.rdr.error(ErrorCode::EOFWhileParsingString));
@@ -399,7 +399,7 @@ where
                         b'r' => self.str_buf.push(b'\r'),
                         b't' => self.str_buf.push(b'\t'),
                         b'u' => {
-                            let c = match r#try!(self.decode_hex_escape()) {
+                            let c = match self.decode_hex_escape()? {
                                 0xDC00..=0xDFFF => {
                                     return Err(self
                                         .rdr
@@ -409,7 +409,7 @@ where
                                 // Non-BMP characters are encoded as a sequence of
                                 // two hex escapes, representing UTF-16 surrogates.
                                 n1 @ 0xD800..=0xDBFF => {
-                                    match (r#try!(self.rdr.next_char()), r#try!(self.rdr.next_char())) {
+                                    match (self.rdr.next_char()?, self.rdr.next_char()?) {
                                         (Some(b'\\'), Some(b'u')) => (),
                                         _ => {
                                             return Err(self
@@ -418,7 +418,7 @@ where
                                         }
                                     }
 
-                                    let n2 = r#try!(self.decode_hex_escape());
+                                    let n2 = self.decode_hex_escape()?;
 
                                     if !(0xDC00..=0xDFFF).contains(&n2) {
                                         return Err(self
@@ -468,9 +468,9 @@ where
     }
 
     fn parse_object_colon(&mut self) -> Result<()> {
-        r#try!(self.rdr.parse_whitespace());
+        self.rdr.parse_whitespace()?;
 
-        match r#try!(self.rdr.next_char()) {
+        match self.rdr.next_char()? {
             Some(b':') => Ok(()),
             Some(_) => Err(self.rdr.error(ErrorCode::ExpectedColon)),
             None => Err(self.rdr.error(ErrorCode::EOFWhileParsingObject)),
@@ -502,12 +502,12 @@ where
     where
         V: de::Visitor,
     {
-        r#try!(self.rdr.parse_whitespace());
+        self.rdr.parse_whitespace()?;
 
-        match r#try!(self.rdr.peek_or_null()) {
+        match self.rdr.peek_or_null()? {
             b'n' => {
                 self.rdr.eat_char();
-                r#try!(self.parse_ident(b"ull"));
+                self.parse_ident(b"ull")?;
                 visitor.visit_none()
             }
             _ => visitor.visit_some(self),
@@ -575,9 +575,9 @@ where
     where
         T: de::Deserialize,
     {
-        r#try!(self.de.rdr.parse_whitespace());
+        self.de.rdr.parse_whitespace()?;
 
-        match r#try!(self.de.rdr.peek()) {
+        match self.de.rdr.peek()? {
             Some(b']') => {
                 return Ok(None);
             }
@@ -587,22 +587,22 @@ where
             }
         }
 
-        let value = r#try!(de::Deserialize::deserialize(self.de));
+        let value = de::Deserialize::deserialize(self.de)?;
 
         // in Hjson the comma is optional and trailing commas are allowed
-        r#try!(self.de.rdr.parse_whitespace());
-        if r#try!(self.de.rdr.peek()) == Some(b',') {
+        self.de.rdr.parse_whitespace()?;
+        if self.de.rdr.peek()? == Some(b',') {
             self.de.rdr.eat_char();
-            r#try!(self.de.rdr.parse_whitespace());
+            self.de.rdr.parse_whitespace()?;
         }
 
         Ok(Some(value))
     }
 
     fn end(&mut self) -> Result<()> {
-        r#try!(self.de.rdr.parse_whitespace());
+        self.de.rdr.parse_whitespace()?;
 
-        match r#try!(self.de.rdr.next_char()) {
+        match self.de.rdr.next_char()? {
             Some(b']') => Ok(()),
             Some(_) => Err(self.de.rdr.error(ErrorCode::TrailingCharacters)),
             None => Err(self.de.rdr.error(ErrorCode::EOFWhileParsingList)),
@@ -636,17 +636,17 @@ where
     where
         K: de::Deserialize,
     {
-        r#try!(self.de.rdr.parse_whitespace());
+        self.de.rdr.parse_whitespace()?;
 
         if self.first {
             self.first = false;
-        } else if r#try!(self.de.rdr.peek()) == Some(b',') {
+        } else if self.de.rdr.peek()? == Some(b',') {
             // in Hjson the comma is optional and trailing commas are allowed
             self.de.rdr.eat_char();
-            r#try!(self.de.rdr.parse_whitespace());
+            self.de.rdr.parse_whitespace()?;
         }
 
-        match r#try!(self.de.rdr.peek()) {
+        match self.de.rdr.peek()? {
             Some(b'}') => return Ok(None), // handled later for root
             Some(_) => {}
             None => {
@@ -658,14 +658,14 @@ where
             }
         }
 
-        match r#try!(self.de.rdr.peek()) {
+        match self.de.rdr.peek()? {
             Some(ch) => {
                 self.de.state = if ch == b'"' {
                     State::Normal
                 } else {
                     State::Keyname
                 };
-                Ok(Some(r#try!(de::Deserialize::deserialize(self.de))))
+                Ok(Some(de::Deserialize::deserialize(self.de)?))
             }
             None => Err(self.de.rdr.error(ErrorCode::EOFWhileParsingValue)),
         }
@@ -675,15 +675,15 @@ where
     where
         V: de::Deserialize,
     {
-        r#try!(self.de.parse_object_colon());
+        self.de.parse_object_colon()?;
 
-        Ok(r#try!(de::Deserialize::deserialize(self.de)))
+        de::Deserialize::deserialize(self.de)
     }
 
     fn end(&mut self) -> Result<()> {
-        r#try!(self.de.rdr.parse_whitespace());
+        self.de.rdr.parse_whitespace()?;
 
-        match r#try!(self.de.rdr.next_char()) {
+        match self.de.rdr.next_char()? {
             Some(b'}') => {
                 if !self.root {
                     Ok(())
@@ -763,7 +763,7 @@ where
         }
 
         let mut de = MissingFieldDeserializer(field);
-        Ok(r#try!(de::Deserialize::deserialize(&mut de)))
+        Ok(de::Deserialize::deserialize(&mut de)?)
     }
 }
 
@@ -777,8 +777,8 @@ where
     where
         V: de::Deserialize,
     {
-        let val = r#try!(de::Deserialize::deserialize(self));
-        r#try!(self.parse_object_colon());
+        let val = de::Deserialize::deserialize(self)?;
+        self.parse_object_colon()?;
         Ok(val)
     }
 
@@ -884,14 +884,14 @@ where
     // deserialize and make sure the whole stream has been consumed
     let mut de = Deserializer::new_for_root(bytes.iter().copied());
     let value = match de::Deserialize::deserialize(&mut de).and_then(|x| {
-        r#try!(de.end());
+        de.end()?;
         Ok(x)
     }) {
         Ok(v) => Ok(v),
         Err(_) => {
             let mut de2 = Deserializer::new(bytes.iter().copied());
             match de::Deserialize::deserialize(&mut de2).and_then(|x| {
-                r#try!(de2.end());
+                de2.end()?;
                 Ok(x)
             }) {
                 Ok(v) => Ok(v),
