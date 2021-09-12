@@ -17,9 +17,10 @@ macro_rules! forward_to_deserialize {
             $(_: $ty,)*
             _visitor: V,
         ) -> ::std::result::Result<V::Value, Self::Error>
-            where V: ::serde::de::EnumVisitor
+            where V: ::serde::de::Visitor
         {
-            Err(::serde::de::Error::invalid_type(::serde::de::Type::Enum))
+            // TODO: can this be `&self` or does it need a message?
+            Err(::serde::de::Error::invalid_type(::serde::de::Unexpected::Enum, &self))
         }
     };
 

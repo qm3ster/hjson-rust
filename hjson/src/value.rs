@@ -940,18 +940,21 @@ impl de::Deserializer for Deserializer {
                 let (variant, value) = match iter.next() {
                     Some(v) => v,
                     None => {
-                        return Err(de::Error::invalid_type(de::Type::VariantName));
+                        return Err(de::Error::invalid_type(
+                            de::Unexpected::VariantName,
+                            &"TODO",
+                        ));
                     }
                 };
                 // enums are encoded in json as maps with a single key:value pair
                 if iter.next().is_some() {
-                    return Err(de::Error::invalid_type(de::Type::Map));
+                    return Err(de::Error::invalid_type(de::Unexpected::Map, &"TODO"));
                 }
                 (variant, Some(value))
             }
             Some(Value::String(variant)) => (variant, None),
             Some(_) => {
-                return Err(de::Error::invalid_type(de::Type::Enum));
+                return Err(de::Error::invalid_type(de::Unexpected::Enum, &"TODO"));
             }
             None => {
                 return Err(de::Error::end_of_stream());
@@ -1053,7 +1056,7 @@ impl<'a> de::VariantVisitor for VariantDeserializer<'a> {
                 visitor,
             )
         } else {
-            Err(de::Error::invalid_type(de::Type::Tuple))
+            Err(de::Error::invalid_type(de::Unexpected::Tuple))
         }
     }
 
@@ -1077,7 +1080,7 @@ impl<'a> de::VariantVisitor for VariantDeserializer<'a> {
                 visitor,
             )
         } else {
-            Err(de::Error::invalid_type(de::Type::Struct))
+            Err(de::Error::invalid_type(de::Unexpected::Struct))
         }
     }
 }
@@ -1156,7 +1159,7 @@ impl<'a> de::SeqVisitor for SeqDeserializer<'a> {
         if self.len == 0 {
             Ok(())
         } else {
-            Err(de::Error::invalid_length(self.len))
+            Err(de::Error::invalid_length(self.len, &"TODO"))
         }
     }
 
@@ -1203,7 +1206,7 @@ impl<'a> de::MapVisitor for MapDeserializer<'a> {
         if self.len == 0 {
             Ok(())
         } else {
-            Err(de::Error::invalid_length(self.len))
+            Err(de::Error::invalid_length(self.len, "TODO"))
         }
     }
 

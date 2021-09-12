@@ -19,7 +19,7 @@ pub enum ErrorCode {
     Custom(String),
 
     /// Incorrect type from value
-    InvalidType(de::Type),
+    InvalidType(de::Unexpected<'static>),
 
     /// Incorrect value
     InvalidValue(String),
@@ -139,6 +139,12 @@ pub enum Error {
     FromUtf8(FromUtf8Error),
 }
 
+impl Error {
+    fn end_of_stream() -> Error {
+        Error::Syntax(ErrorCode::EOFWhileParsingValue, 0, 0)
+    }
+}
+
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
@@ -203,11 +209,7 @@ impl de::Error for Error {
         Error::Syntax(ErrorCode::Custom(msg.into()), 0, 0)
     }
 
-    fn end_of_stream() -> Error {
-        Error::Syntax(ErrorCode::EOFWhileParsingValue, 0, 0)
-    }
-
-    fn invalid_type(ty: de::Type) -> Error {
+    fn invalid_type(ty: de::Unexpected) -> Error {
         Error::Syntax(ErrorCode::InvalidType(ty), 0, 0)
     }
 
