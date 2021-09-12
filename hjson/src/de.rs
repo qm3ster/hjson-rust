@@ -92,7 +92,7 @@ where
             let ch = try!(self.rdr.next_char_or_null());
 
             if ch == b':' {
-                if self.str_buf.len() == 0 {
+                if self.str_buf.is_empty() {
                     return Err(self.rdr.error(ErrorCode::Custom(
                         "Found ':' but no key name (for an empty key name use quotes)".to_string(),
                     )));
@@ -232,8 +232,8 @@ where
                         }
                     }
                     _ => {
-                        if chf == b'-' || chf >= b'0' && chf <= b'9' {
-                            let mut pn = ParseNumber::new(self.str_buf.iter().map(|b| *b));
+                        if chf == b'-' || (b'0'..=b'9').contains(&chf) {
+                            let mut pn = ParseNumber::new(self.str_buf.iter().copied());
                             match pn.parse(false) {
                                 Ok(Number::F64(v)) => {
                                     self.rdr.uneat_char(ch);
@@ -270,7 +270,7 @@ where
         let mut n = 0u16;
         while i < 4 && !try!(self.rdr.eof()) {
             n = match try!(self.rdr.next_char_or_null()) {
-                c @ b'0'...b'9' => n * 16_u16 + ((c as u16) - (b'0' as u16)),
+                c @ b'0'..=b'9' => n * 16_u16 + ((c as u16) - (b'0' as u16)),
                 b'a' | b'A' => n * 16_u16 + 10_u16,
                 b'b' | b'B' => n * 16_u16 + 11_u16,
                 b'c' | b'C' => n * 16_u16 + 12_u16,
@@ -297,9 +297,9 @@ where
         match try!(self.rdr.peek_or_null()) {
             b' ' | b'\t' | b'\r' => {
                 self.rdr.eat_char();
-                return Ok(true);
+                Ok(true)
             }
-            _ => return Ok(false),
+            _ => Ok(false),
         }
     }
 
@@ -400,7 +400,7 @@ where
                         b't' => self.str_buf.push(b'\t'),
                         b'u' => {
                             let c = match try!(self.decode_hex_escape()) {
-                                0xDC00...0xDFFF => {
+                                0xDC00..=0xDFFF => {
                                     return Err(self
                                         .rdr
                                         .error(ErrorCode::LoneLeadingSurrogateInHexEscape));
@@ -408,7 +408,7 @@ where
 
                                 // Non-BMP characters are encoded as a sequence of
                                 // two hex escapes, representing UTF-16 surrogates.
-                                n1 @ 0xD800...0xDBFF => {
+                                n1 @ 0xD800..=0xDBFF => {
                                     match (try!(self.rdr.next_char()), try!(self.rdr.next_char())) {
                                         (Some(b'\\'), Some(b'u')) => (),
                                         _ => {
@@ -420,7 +420,7 @@ where
 
                                     let n2 = try!(self.decode_hex_escape());
 
-                                    if n2 < 0xDC00 || n2 > 0xDFFF {
+                                    if !(0xDC00..=0xDFFF).contains(&n2) {
                                         return Err(self
                                             .rdr
                                             .error(ErrorCode::LoneLeadingSurrogateInHexEscape));
@@ -561,7 +561,7 @@ struct SeqVisitor<'a, Iter: 'a + Iterator<Item = u8>> {
 
 impl<'a, Iter: Iterator<Item = u8>> SeqVisitor<'a, Iter> {
     fn new(de: &'a mut Deserializer<Iter>) -> Self {
-        SeqVisitor { de: de }
+        SeqVisitor { de }
     }
 }
 
@@ -619,9 +619,9 @@ struct MapVisitor<'a, Iter: 'a + Iterator<Item = u8>> {
 impl<'a, Iter: Iterator<Item = u8>> MapVisitor<'a, Iter> {
     fn new(de: &'a mut Deserializer<Iter>, root: bool) -> Self {
         MapVisitor {
-            de: de,
+            de,
             first: true,
-            root: root,
+            root,
         }
     }
 }
@@ -882,14 +882,14 @@ where
     // todo: add compile switch
 
     // deserialize and make sure the whole stream has been consumed
-    let mut de = Deserializer::new_for_root(bytes.iter().map(|b| *b));
+    let mut de = Deserializer::new_for_root(bytes.iter().copied());
     let value = match de::Deserialize::deserialize(&mut de).and_then(|x| {
         try!(de.end());
         Ok(x)
     }) {
         Ok(v) => Ok(v),
         Err(_) => {
-            let mut de2 = Deserializer::new(bytes.iter().map(|b| *b));
+            let mut de2 = Deserializer::new(bytes.iter().copied());
             match de::Deserialize::deserialize(&mut de2).and_then(|x| {
                 try!(de2.end());
                 Ok(x)

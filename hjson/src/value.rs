@@ -141,7 +141,7 @@ impl Value {
             }
             s.parse().ok()
         }
-        if pointer == "" {
+        if pointer.is_empty() {
             return Some(self);
         }
         if !pointer.starts_with('/') {
@@ -919,7 +919,7 @@ impl de::Deserializer for Deserializer {
                 visitor.visit_seq(SeqDeserializer {
                     de: self,
                     iter: v.into_iter(),
-                    len: len,
+                    len,
                 })
             }
             Value::Object(v) => {
@@ -928,7 +928,7 @@ impl de::Deserializer for Deserializer {
                     de: self,
                     iter: v.into_iter(),
                     value: None,
-                    len: len,
+                    len,
                 })
             }
         }

@@ -17,7 +17,7 @@ where
     #[inline]
     pub fn new(iter: Iter) -> Self {
         StringReader {
-            iter: iter,
+            iter,
             line: 1,
             col: 0,
             ch: Vec::new(),
@@ -208,12 +208,10 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
                         if is_float {
                             Ok(Number::F64(res.parse::<f64>().unwrap()))
+                        } else if res.starts_with('-') {
+                            Ok(Number::I64(res.parse::<i64>().unwrap()))
                         } else {
-                            if res.starts_with("-") {
-                                Ok(Number::I64(res.parse::<i64>().unwrap()))
-                            } else {
-                                Ok(Number::U64(res.parse::<u64>().unwrap()))
-                            }
+                            Ok(Number::U64(res.parse::<u64>().unwrap()))
                         }
                     }
                     _ => Err(Error::Syntax(ErrorCode::InvalidNumber, 0, 0)),
@@ -235,7 +233,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
             has_value = true;
             // There can be only one leading '0'.
             match try!(self.rdr.peek_or_null()) {
-                b'0'...b'9' => {
+                b'0'..=b'9' => {
                     return Err(Error::Syntax(ErrorCode::InvalidNumber, 0, 0));
                 }
                 _ => {}
@@ -244,7 +242,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
         loop {
             match try!(self.rdr.peek_or_null()) {
-                b'0'...b'9' => {
+                b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                     has_value = true;
                 }
@@ -277,7 +275,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
         // Make sure a digit follows the decimal place.
         match try!(self.rdr.next_char_or_null()) {
-            c @ b'0'...b'9' => {
+            c @ b'0'..=b'9' => {
                 self.result.push(c);
             }
             _ => {
@@ -287,7 +285,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
         loop {
             match try!(self.rdr.peek_or_null()) {
-                b'0'...b'9' => {
+                b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                 }
                 _ => {
@@ -320,7 +318,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
         // Make sure a digit follows the exponent place.
         match try!(self.rdr.next_char_or_null()) {
-            c @ b'0'...b'9' => {
+            c @ b'0'..=b'9' => {
                 self.result.push(c);
             }
             _ => {
@@ -330,7 +328,7 @@ impl<Iter: Iterator<Item = u8>> ParseNumber<Iter> {
 
         loop {
             match try!(self.rdr.peek_or_null()) {
-                b'0'...b'9' => {
+                b'0'..=b'9' => {
                     self.result.push(self.rdr.eat_char());
                 }
                 _ => {

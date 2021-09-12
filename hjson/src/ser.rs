@@ -40,8 +40,8 @@ where
     #[inline]
     pub fn with_formatter(writer: W, formatter: F) -> Self {
         Serializer {
-            writer: writer,
-            formatter: formatter,
+            writer,
+            formatter,
         }
     }
 
@@ -749,7 +749,7 @@ impl<'a> HjsonFormatter<'a> {
             current_is_array: false,
             stack: Vec::new(),
             at_colon: false,
-            indent: indent,
+            indent,
             braces_same_line: false,
         }
     }
@@ -795,7 +795,7 @@ impl<'a> Formatter for HjsonFormatter<'a> {
     {
         self.current_indent -= 1;
         self.current_is_array = self.stack.pop().unwrap();
-        try!(writer.write(b"\n"));
+        try!(writer.write_all(b"\n"));
         try!(indent(writer, self.current_indent, self.indent));
         writer.write_all(&[ch]).map_err(From::from)
     }
@@ -881,7 +881,7 @@ where
         static ref STARTS_WITH_KEYWORD: Regex = Regex::new(r#"^(true|false|null)\s*((,|\]|\}|#|//|/\*).*)?$"#).unwrap();
     }
 
-    if value.len() == 0 {
+    if value.is_empty() {
         try!(formatter.start_value(wr));
         return escape_bytes(wr, value.as_bytes());
     }
@@ -922,7 +922,7 @@ where
 {
     // wrap the string into the ''' (multiline) format
 
-    let a: Vec<&str> = value.split("\n").collect();
+    let a: Vec<&str> = value.split('\n').collect();
 
     if a.len() == 1 {
         // The string contains only a single line. We still use the multiline
@@ -936,7 +936,7 @@ where
         try!(formatter.newline(wr, 1));
         try!(wr.write_all(b"'''"));
         for line in a {
-            try!(formatter.newline(wr, if line.len() > 0 { 1 } else { -999 }));
+            try!(formatter.newline(wr, if !line.is_empty() { 1 } else { -999 }));
             try!(wr.write_all(line.as_bytes()));
         }
         try!(formatter.newline(wr, 1));
@@ -1028,12 +1028,10 @@ where
     let f2 = format!("{:e}", value);
     if f1.len() <= f2.len() + 1 {
         f1
+    } else if !f2.contains("e-") {
+        f2.replace("e", "e+")
     } else {
-        if !f2.contains("e-") {
-            f2.replace("e", "e+")
-        } else {
-            f2
-        }
+        f2
     }
 }
 
