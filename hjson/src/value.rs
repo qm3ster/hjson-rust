@@ -536,11 +536,6 @@ impl ser::Serializer for Serializer {
     }
 
     #[inline]
-    fn serialize_isize(&mut self, value: isize) -> Result<(), Error> {
-        self.serialize_i64(value as i64)
-    }
-
-    #[inline]
     fn serialize_i8(&mut self, value: i8) -> Result<(), Error> {
         self.serialize_i64(value as i64)
     }
@@ -562,11 +557,6 @@ impl ser::Serializer for Serializer {
             self.value = Value::U64(value as u64);
         }
         Ok(())
-    }
-
-    #[inline]
-    fn serialize_usize(&mut self, value: usize) -> Result<(), Error> {
-        self.serialize_u64(value as u64)
     }
 
     #[inline]
@@ -989,12 +979,10 @@ impl de::Deserializer for Deserializer {
 
     forward_to_deserialize! {
         deserialize_bool();
-        deserialize_usize();
         deserialize_u8();
         deserialize_u16();
         deserialize_u32();
         deserialize_u64();
-        deserialize_isize();
         deserialize_i8();
         deserialize_i16();
         deserialize_i32();
@@ -1117,12 +1105,10 @@ impl<'a> de::Deserializer for SeqDeserializer<'a> {
 
     forward_to_deserialize! {
         deserialize_bool();
-        deserialize_usize();
         deserialize_u8();
         deserialize_u16();
         deserialize_u32();
         deserialize_u64();
-        deserialize_isize();
         deserialize_i8();
         deserialize_i16();
         deserialize_i32();
@@ -1247,12 +1233,10 @@ impl<'a> de::MapVisitor for MapDeserializer<'a> {
 
             forward_to_deserialize! {
                 deserialize_bool();
-                deserialize_usize();
                 deserialize_u8();
                 deserialize_u16();
                 deserialize_u32();
                 deserialize_u64();
-                deserialize_isize();
                 deserialize_i8();
                 deserialize_i16();
                 deserialize_i32();
@@ -1300,12 +1284,10 @@ impl<'a> de::Deserializer for MapDeserializer<'a> {
 
     forward_to_deserialize! {
         deserialize_bool();
-        deserialize_usize();
         deserialize_u8();
         deserialize_u16();
         deserialize_u32();
         deserialize_u64();
-        deserialize_isize();
         deserialize_i8();
         deserialize_i16();
         deserialize_i32();

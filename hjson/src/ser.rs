@@ -83,12 +83,6 @@ where
     }
 
     #[inline]
-    fn serialize_isize(&mut self, value: isize) -> Result<()> {
-        self.formatter.start_value(&mut self.writer)?;
-        write!(&mut self.writer, "{}", value).map_err(From::from)
-    }
-
-    #[inline]
     fn serialize_i8(&mut self, value: i8) -> Result<()> {
         self.formatter.start_value(&mut self.writer)?;
         write!(&mut self.writer, "{}", value).map_err(From::from)
@@ -108,12 +102,6 @@ where
 
     #[inline]
     fn serialize_i64(&mut self, value: i64) -> Result<()> {
-        self.formatter.start_value(&mut self.writer)?;
-        write!(&mut self.writer, "{}", value).map_err(From::from)
-    }
-
-    #[inline]
-    fn serialize_usize(&mut self, value: usize) -> Result<()> {
         self.formatter.start_value(&mut self.writer)?;
         write!(&mut self.writer, "{}", value).map_err(From::from)
     }
@@ -459,10 +447,6 @@ where
         Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))
     }
 
-    fn serialize_isize(&mut self, _value: isize) -> Result<()> {
-        Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))
-    }
-
     fn serialize_i8(&mut self, _value: i8) -> Result<()> {
         Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))
     }
@@ -476,10 +460,6 @@ where
     }
 
     fn serialize_i64(&mut self, _value: i64) -> Result<()> {
-        Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))
-    }
-
-    fn serialize_usize(&mut self, _value: usize) -> Result<()> {
         Err(Error::Syntax(ErrorCode::KeyMustBeAString, 0, 0))
     }
 
@@ -973,12 +953,8 @@ where
     W: io::Write,
 {
     match value.classify() {
-        FpCategory::Nan | FpCategory::Infinite => {
-            wr.write_all(b"null")?
-        }
-        _ => {
-            wr.write_all(fmt_small(value).as_bytes())?
-        }
+        FpCategory::Nan | FpCategory::Infinite => wr.write_all(b"null")?,
+        _ => wr.write_all(fmt_small(value).as_bytes())?,
     }
 
     Ok(())
@@ -989,12 +965,8 @@ where
     W: io::Write,
 {
     match value.classify() {
-        FpCategory::Nan | FpCategory::Infinite => {
-            wr.write_all(b"null")?
-        }
-        _ => {
-            wr.write_all(fmt_small(value).as_bytes())?
-        }
+        FpCategory::Nan | FpCategory::Infinite => wr.write_all(b"null")?,
+        _ => wr.write_all(fmt_small(value).as_bytes())?,
     }
 
     Ok(())

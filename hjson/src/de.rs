@@ -518,12 +518,10 @@ where
 
     forward_to_deserialize! {
         deserialize_bool();
-        deserialize_usize();
         deserialize_u8();
         deserialize_u16();
         deserialize_u32();
         deserialize_u64();
-        deserialize_isize();
         deserialize_i8();
         deserialize_i16();
         deserialize_i32();
@@ -724,12 +722,10 @@ where
 
             forward_to_deserialize! {
                 deserialize_bool();
-                deserialize_usize();
                 deserialize_u8();
                 deserialize_u16();
                 deserialize_u32();
                 deserialize_u64();
-                deserialize_isize();
                 deserialize_i8();
                 deserialize_i16();
                 deserialize_i32();
