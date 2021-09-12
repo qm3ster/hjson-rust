@@ -16,7 +16,7 @@ preserve_order = ["linked-hash-map", "linked-hash-map/serde_impl"]
 default = ["preserve_order"]
 
 [dependencies]
-serde = "^0.8.0"
+serde = "0.9"
 num-traits = "~0.1.32"
 regex = "^1.0"
 lazy_static = "1"
