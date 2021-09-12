@@ -13,8 +13,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const USAGE: &'static str = "
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const USAGE: &str = "
 Hjson, the Human JSON.
 
 Usage:
@@ -45,7 +45,7 @@ fn main() {
     let input = args.get_str("<input>");
     let mut buffer = String::new();
 
-    if input != "" {
+    if !input.is_empty() {
         let mut f = File::open(&Path::new(input)).unwrap();
         f.read_to_string(&mut buffer).unwrap();
     } else {

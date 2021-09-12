@@ -38,14 +38,15 @@ use serde::ser;
 use crate::value::{self, Map, Value};
 
 /// This structure provides a simple interface for constructing a JSON array.
+#[derive(Default)]
 pub struct ArrayBuilder {
     array: Vec<Value>,
 }
 
 impl ArrayBuilder {
     /// Construct an `ObjectBuilder`.
-    pub fn new() -> ArrayBuilder {
-        ArrayBuilder { array: Vec::new() }
+    pub fn new() -> Self {
+        Default::default()
     }
 
     /// Return the constructed `Value`.
@@ -54,14 +55,14 @@ impl ArrayBuilder {
     }
 
     /// Insert a value into the array.
-    pub fn push<T: ser::Serialize>(mut self, v: T) -> ArrayBuilder {
+    pub fn push<T: ser::Serialize>(mut self, v: T) -> Self {
         self.array.push(value::to_value(&v));
         self
     }
 
     /// Creates and passes an `ArrayBuilder` into a closure, then inserts the resulting array into
     /// this array.
-    pub fn push_array<F>(mut self, f: F) -> ArrayBuilder
+    pub fn push_array<F>(mut self, f: F) -> Self
     where
         F: FnOnce(ArrayBuilder) -> ArrayBuilder,
     {
@@ -72,7 +73,7 @@ impl ArrayBuilder {
 
     /// Creates and passes an `ArrayBuilder` into a closure, then inserts the resulting object into
     /// this array.
-    pub fn push_object<F>(mut self, f: F) -> ArrayBuilder
+    pub fn push_object<F>(mut self, f: F) -> Self
     where
         F: FnOnce(ObjectBuilder) -> ObjectBuilder,
     {
@@ -83,14 +84,15 @@ impl ArrayBuilder {
 }
 
 /// This structure provides a simple interface for constructing a JSON object.
+#[derive(Default)]
 pub struct ObjectBuilder {
     object: Map<String, Value>,
 }
 
 impl ObjectBuilder {
     /// Construct an `ObjectBuilder`.
-    pub fn new() -> ObjectBuilder {
-        ObjectBuilder { object: Map::new() }
+    pub fn new() -> Self {
+        Default::default()
     }
 
     /// Return the constructed `Value`.
@@ -99,7 +101,7 @@ impl ObjectBuilder {
     }
 
     /// Insert a key-value pair into the object.
-    pub fn insert<S, V>(mut self, key: S, value: V) -> ObjectBuilder
+    pub fn insert<S, V>(mut self, key: S, value: V) -> Self
     where
         S: Into<String>,
         V: ser::Serialize,
@@ -110,7 +112,7 @@ impl ObjectBuilder {
 
     /// Creates and passes an `ObjectBuilder` into a closure, then inserts the resulting array into
     /// this object.
-    pub fn insert_array<S, F>(mut self, key: S, f: F) -> ObjectBuilder
+    pub fn insert_array<S, F>(mut self, key: S, f: F) -> Self
     where
         S: Into<String>,
         F: FnOnce(ArrayBuilder) -> ArrayBuilder,
@@ -122,7 +124,7 @@ impl ObjectBuilder {
 
     /// Creates and passes an `ObjectBuilder` into a closure, then inserts the resulting object into
     /// this object.
-    pub fn insert_object<S, F>(mut self, key: S, f: F) -> ObjectBuilder
+    pub fn insert_object<S, F>(mut self, key: S, f: F) -> Self
     where
         S: Into<String>,
         F: FnOnce(ObjectBuilder) -> ObjectBuilder,

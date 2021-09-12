@@ -885,10 +885,7 @@ where
     // see hjson syntax (must not parse as true, false, null or number)
 
     let mut pn = ParseNumber::new(value.bytes());
-    let is_number = match pn.parse(true) {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    let is_number = pn.parse(true).is_ok();
 
     if is_number || NEEDS_QUOTES.is_match(value) || STARTS_WITH_KEYWORD.is_match(value) {
         // First check if the string can be expressed in multiline format or

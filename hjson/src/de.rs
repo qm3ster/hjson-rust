@@ -71,10 +71,7 @@ where
     }
 
     fn is_punctuator_char(&mut self, ch: u8) -> bool {
-        match ch {
-            b'{' | b'}' | b'[' | b']' | b',' | b':' => true,
-            _ => false,
-        }
+        matches!(ch, b'{' | b'}' | b'[' | b']' | b',' | b':')
     }
 
     fn parse_keyname<V>(&mut self, mut visitor: V) -> Result<V::Value>
@@ -489,10 +486,6 @@ where
     where
         V: de::Visitor,
     {
-        match self.state {
-            State::Root => {}
-            _ => {}
-        };
         self.parse_value(visitor)
     }
 
@@ -871,11 +864,8 @@ where
     T: de::Deserialize,
 {
     let fold: io::Result<Vec<_>> = iter.collect();
-    if fold.is_err() {
-        return Err(Error::Io(fold.unwrap_err()));
-    }
 
-    let bytes = fold.unwrap();
+    let bytes = fold?;
 
     // deserialize tries first to decode with legacy support (new_for_root)
     // and then with the standard method if this fails.

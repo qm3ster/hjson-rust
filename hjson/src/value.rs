@@ -247,34 +247,22 @@ impl Value {
 
     /// Returns true if the `Value` is a Number. Returns false otherwise.
     pub fn is_number(&self) -> bool {
-        match *self {
-            Value::I64(_) | Value::U64(_) | Value::F64(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::I64(_) | Value::U64(_) | Value::F64(_))
     }
 
     /// Returns true if the `Value` is a i64. Returns false otherwise.
     pub fn is_i64(&self) -> bool {
-        match *self {
-            Value::I64(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::I64(_))
     }
 
     /// Returns true if the `Value` is a u64. Returns false otherwise.
     pub fn is_u64(&self) -> bool {
-        match *self {
-            Value::U64(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::U64(_))
     }
 
     /// Returns true if the `Value` is a f64. Returns false otherwise.
     pub fn is_f64(&self) -> bool {
-        match *self {
-            Value::F64(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::F64(_))
     }
 
     /// If the `Value` is a number, return or cast it to a i64.
@@ -1391,6 +1379,7 @@ mod test {
 
     #[test]
     fn number_deserialize() {
+        #![allow(clippy::float_cmp)]
         let v: Value = from_str("{\"a\":1}").unwrap();
         let vo = v.as_object().unwrap();
         assert_eq!(vo["a"].as_u64().unwrap(), 1);
