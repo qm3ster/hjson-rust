@@ -89,7 +89,7 @@ pub enum ErrorCode {
 }
 
 impl fmt::Debug for ErrorCode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         //use std::fmt::Debug;
 
         match *self {
@@ -158,7 +158,7 @@ impl error::Error for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Error::Syntax(ref code, line, col) => {
                 write!(fmt, "{:?} at line {} column {}", code, line, col)

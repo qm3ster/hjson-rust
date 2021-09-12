@@ -60,12 +60,12 @@
 #[macro_use]
 extern crate lazy_static;
 
-extern crate core;
+
 #[cfg(feature = "preserve_order")]
 extern crate linked_hash_map;
-extern crate num_traits;
-extern crate regex;
-extern crate serde;
+
+
+
 
 pub use self::de::{
     from_iter, from_reader, from_slice, from_str, Deserializer, StreamDeserializer,

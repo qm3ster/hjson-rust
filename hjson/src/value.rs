@@ -48,7 +48,7 @@ use num_traits::NumCast;
 use serde::de;
 use serde::ser;
 
-use error::{Error, ErrorCode};
+use crate::error::{Error, ErrorCode};
 
 /// Represents a key/value type.
 #[cfg(not(feature = "preserve_order"))]
@@ -427,7 +427,7 @@ impl de::Deserialize for Value {
             where
                 V: de::SeqVisitor,
             {
-                let values = try!(de::impls::VecVisitor::new().visit_seq(visitor));
+                let values = r#try!(de::impls::VecVisitor::new().visit_seq(visitor));
                 Ok(Value::Array(values))
             }
 
@@ -436,7 +436,7 @@ impl de::Deserialize for Value {
             where
                 V: de::MapVisitor,
             {
-                let values = try!(MapVisitor::new().visit_map(visitor));
+                let values = r#try!(MapVisitor::new().visit_map(visitor));
                 Ok(Value::Object(values))
             }
         }
@@ -445,7 +445,7 @@ impl de::Deserialize for Value {
     }
 }
 
-struct WriterFormatter<'a, 'b: 'a> {
+struct WriterFormatter<'a, 'b> {
     inner: &'a mut fmt::Formatter<'b>,
 }
 
@@ -456,8 +456,8 @@ impl<'a, 'b> io::Write for WriterFormatter<'a, 'b> {
             // below just map it to fmt::Error
             io::Error::new(io::ErrorKind::Other, "fmt error")
         }
-        let s = try!(str::from_utf8(buf).map_err(io_error));
-        try!(self.inner.write_str(s).map_err(io_error));
+        let s = r#try!(str::from_utf8(buf).map_err(io_error));
+        r#try!(self.inner.write_str(s).map_err(io_error));
         Ok(buf.len())
     }
 
@@ -468,7 +468,7 @@ impl<'a, 'b> io::Write for WriterFormatter<'a, 'b> {
 
 impl fmt::Debug for Value {
     /// Serializes a Hjson value into a string
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut wr = WriterFormatter { inner: f };
         super::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
     }
@@ -476,7 +476,7 @@ impl fmt::Debug for Value {
 
 impl fmt::Display for Value {
     /// Serializes a Hjson value into a string
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut wr = WriterFormatter { inner: f };
         super::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
     }
@@ -627,9 +627,9 @@ impl ser::Serializer for Serializer {
     }
 
     fn serialize_bytes(&mut self, value: &[u8]) -> Result<(), Error> {
-        let mut state = try!(self.serialize_seq(Some(value.len())));
+        let mut state = r#try!(self.serialize_seq(Some(value.len())));
         for byte in value {
-            try!(self.serialize_seq_elt(&mut state, byte));
+            r#try!(self.serialize_seq_elt(&mut state, byte));
         }
         self.serialize_seq_end(state)
     }
@@ -839,7 +839,7 @@ impl ser::Serializer for Serializer {
         key: &'static str,
         value: V,
     ) -> Result<(), Error> {
-        try!(self.serialize_map_key(state, key));
+        r#try!(self.serialize_map_key(state, key));
         self.serialize_map_value(state, value)
     }
 
@@ -1172,7 +1172,7 @@ impl<'a> de::SeqVisitor for SeqDeserializer<'a> {
             Some(value) => {
                 self.len -= 1;
                 self.de.value = Some(value);
-                Ok(Some(try!(de::Deserialize::deserialize(self.de))))
+                Ok(Some(r#try!(de::Deserialize::deserialize(self.de))))
             }
             None => Ok(None),
         }
@@ -1210,7 +1210,7 @@ impl<'a> de::MapVisitor for MapDeserializer<'a> {
                 self.len -= 1;
                 self.value = Some(value);
                 self.de.value = Some(Value::String(key));
-                Ok(Some(try!(de::Deserialize::deserialize(self.de))))
+                Ok(Some(r#try!(de::Deserialize::deserialize(self.de))))
             }
             None => Ok(None),
         }
@@ -1222,7 +1222,7 @@ impl<'a> de::MapVisitor for MapDeserializer<'a> {
     {
         let value = self.value.take().expect("value is missing");
         self.de.value = Some(value);
-        Ok(try!(de::Deserialize::deserialize(self.de)))
+        Ok(r#try!(de::Deserialize::deserialize(self.de)))
     }
 
     fn end(&mut self) -> Result<(), Error> {
@@ -1291,7 +1291,7 @@ impl<'a> de::MapVisitor for MapDeserializer<'a> {
         }
 
         let mut de = MissingFieldDeserializer(field);
-        Ok(try!(de::Deserialize::deserialize(&mut de)))
+        Ok(r#try!(de::Deserialize::deserialize(&mut de)))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -1387,7 +1387,7 @@ where
 #[cfg(test)]
 mod test {
     use super::Value;
-    use de::from_str;
+    use crate::de::from_str;
 
     #[test]
     fn number_deserialize() {
